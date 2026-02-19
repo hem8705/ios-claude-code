@@ -129,9 +129,9 @@ html, body {
   display: flex;
   align-items: center;
   height: 36px;
-  padding: 0 10px;
+  padding: 0 6px 0 10px;
   border-bottom: 1px solid var(--border);
-  gap: 6px;
+  gap: 4px;
   flex-shrink: 0;
 }
 #tree-header-label {
@@ -143,15 +143,64 @@ html, body {
   color: var(--text-dim);
 }
 
-#tree-root-label {
+/* Path bar below the header */
+#tree-path-bar {
+  display: flex;
+  align-items: center;
+  padding: 0 6px 0 8px;
+  height: 34px;
+  border-bottom: 1px solid var(--border);
+  gap: 4px;
+  flex-shrink: 0;
+  background: var(--bg);
+}
+#tree-path-display {
+  flex: 1;
   font-size: 11px;
   color: var(--text-dim);
-  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding: 4px 10px 2px;
+  white-space: nowrap;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  direction: rtl;
+  text-align: left;
+}
+#tree-path-display:hover, #tree-path-display:active {
+  background: var(--bg3);
+  border-color: var(--border);
+}
+#tree-path-input {
+  flex: 1;
+  background: var(--bg3);
+  border: 1px solid var(--accent);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 11px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  outline: none;
+  min-width: 0;
+}
+.path-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  min-width: 28px;
+  padding: 0 4px;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 4px;
+  -webkit-tap-highlight-color: transparent;
   flex-shrink: 0;
 }
+.path-btn:active { background: var(--bg3); color: var(--text); }
 
 #tree-scroll {
   flex: 1;
@@ -475,9 +524,15 @@ html, body {
         <span id="tree-header-label">Explorer</span>
         <button class="tbtn" id="btn-refresh-tree" title="Refresh">&#8635;</button>
       </div>
-      <div id="tree-root-label"></div>
+      <div id="tree-path-bar">
+        <button class="path-btn" id="btn-tree-up" title="Go to parent directory">&#8593;</button>
+        <div id="tree-path-display" title="Tap to change directory"></div>
+        <input id="tree-path-input" type="text" style="display:none" placeholder="/path/to/project" autocomplete="off" autocorrect="off" spellcheck="false">
+        <button class="path-btn" id="btn-path-go" style="display:none;color:var(--accent)" title="Navigate">&#9166;</button>
+        <button class="path-btn" id="btn-path-cancel" style="display:none" title="Cancel">&#10005;</button>
+      </div>
       <div id="tree-scroll">
-        <div class="loading-msg">Loading tree…</div>
+        <div class="loading-msg">Loading...</div>
       </div>
     </div>
 
@@ -524,28 +579,33 @@ const state = {
   termVisible: true,
   termHeight: 0,
   gitStatuses: {},
+  treeRoot: null,
 };
 
 // ===== DOM REFS =====
 const $ = id => document.getElementById(id);
-const btnTree       = $('btn-tree');
-const btnDiff       = $('btn-diff');
-const btnTerm       = $('btn-term');
-const btnViewDiff   = $('btn-view-diff');
-const btnViewRaw    = $('btn-view-raw');
-const btnRefresh    = $('btn-refresh-tree');
-const btnTermReload = $('btn-term-reload');
-const treePanel     = $('tree-panel');
-const treeOverlay   = $('tree-overlay');
-const treeScroll    = $('tree-scroll');
-const treeRootLabel = $('tree-root-label');
-const diffFilename  = $('diff-filename');
-const diffContent   = $('diff-content');
-const diffPanel     = $('diff-panel');
-const termPanel     = $('term-panel');
-const termFrame     = $('term-frame');
-const resizeHandle  = $('resize-handle');
-const breadcrumb    = $('breadcrumb');
+const btnTree        = $('btn-tree');
+const btnDiff        = $('btn-diff');
+const btnTerm        = $('btn-term');
+const btnViewDiff    = $('btn-view-diff');
+const btnViewRaw     = $('btn-view-raw');
+const btnRefresh     = $('btn-refresh-tree');
+const btnTermReload  = $('btn-term-reload');
+const treePanel      = $('tree-panel');
+const treeOverlay    = $('tree-overlay');
+const treeScroll     = $('tree-scroll');
+const diffFilename   = $('diff-filename');
+const diffContent    = $('diff-content');
+const diffPanel      = $('diff-panel');
+const termPanel      = $('term-panel');
+const termFrame      = $('term-frame');
+const resizeHandle   = $('resize-handle');
+const breadcrumb     = $('breadcrumb');
+const treePathDisplay = $('tree-path-display');
+const treePathInput   = $('tree-path-input');
+const btnTreeUp       = $('btn-tree-up');
+const btnPathGo       = $('btn-path-go');
+const btnPathCancel   = $('btn-path-cancel');
 
 // ===== LAYOUT =====
 
@@ -662,30 +722,75 @@ document.addEventListener('touchend', endResize);
 
 // ===== FILE TREE =====
 
-async function loadTree() {
-  treeScroll.innerHTML = '<div class="loading-msg">Loading…</div>';
+async function loadTree(dir) {
+  treeScroll.innerHTML = '<div class="loading-msg">Loading...</div>';
+  const url = dir ? `/api/tree?dir=${encodeURIComponent(dir)}` : '/api/tree';
   try {
-    const res = await fetch('/api/tree');
-    if (!res.ok) throw new Error(await res.text());
+    const res = await fetch(url);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: res.statusText }));
+      throw new Error(err.error || res.statusText);
+    }
     const { root, tree } = await res.json();
-    treeRootLabel.textContent = root.split('/').pop() || root;
     state.treeRoot = root;
-    await loadGitStatuses(root);
+    localStorage.setItem('lastRoot', root);
+    updatePathBar(root);
     treeScroll.innerHTML = '';
     renderTree(tree, treeScroll, 0);
     restoreLastFile();
   } catch (e) {
-    treeScroll.innerHTML = `<div class="loading-msg" style="color:var(--del)">Error: ${e.message}</div>`;
+    treeScroll.innerHTML = `<div class="loading-msg" style="color:var(--del)">Error: ${esc(e.message)}</div>`;
   }
 }
 
-async function loadGitStatuses(root) {
-  try {
-    const res = await fetch(`/api/diff?file=${encodeURIComponent(root + '/.gitkeep')}`);
-    // Get overall status by reading the parent dir status
-    // We'll fetch status per file when clicked — for now skip tree badges
-  } catch {}
+// ===== PATH BAR =====
+
+function updatePathBar(root) {
+  treePathDisplay.textContent = root;
+  treePathDisplay.title = root;
+  treePathInput.value = root;
 }
+
+function showPathInput() {
+  treePathDisplay.style.display = 'none';
+  btnTreeUp.style.display = 'none';
+  treePathInput.style.display = '';
+  btnPathGo.style.display = '';
+  btnPathCancel.style.display = '';
+  treePathInput.focus();
+  treePathInput.select();
+}
+
+function hidePathInput() {
+  treePathDisplay.style.display = '';
+  btnTreeUp.style.display = '';
+  treePathInput.style.display = 'none';
+  btnPathGo.style.display = 'none';
+  btnPathCancel.style.display = 'none';
+}
+
+function navigateTo(path) {
+  hidePathInput();
+  if (path && path.trim()) loadTree(path.trim());
+}
+
+function navigateUp() {
+  if (!state.treeRoot) return;
+  const parts = state.treeRoot.replace(/\/$/, '').split('/');
+  if (parts.length <= 1) return;
+  parts.pop();
+  const parent = parts.join('/') || '/';
+  loadTree(parent);
+}
+
+treePathDisplay.addEventListener('click', showPathInput);
+btnTreeUp.addEventListener('click', navigateUp);
+btnPathGo.addEventListener('click', () => navigateTo(treePathInput.value));
+btnPathCancel.addEventListener('click', hidePathInput);
+treePathInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') navigateTo(treePathInput.value);
+  if (e.key === 'Escape') hidePathInput();
+});
 
 function renderTree(nodes, container, depth) {
   for (const node of nodes) {
@@ -921,7 +1026,7 @@ setViewMode('diff');
 
 // ===== TREE REFRESH =====
 
-btnRefresh.addEventListener('click', loadTree);
+btnRefresh.addEventListener('click', () => loadTree(state.treeRoot || undefined));
 
 // ===== UTILITY =====
 
@@ -941,7 +1046,18 @@ if ('serviceWorker' in navigator) {
 
 // ===== INIT =====
 
-loadTree();
+// Read initial directory from URL ?dir= param, then localStorage, then server default
+(function initTree() {
+  const params = new URLSearchParams(location.search);
+  const dirParam = params.get('dir');
+  if (dirParam) {
+    loadTree(dirParam);
+  } else {
+    const lastRoot = localStorage.getItem('lastRoot');
+    loadTree(lastRoot || undefined);
+  }
+})();
+
 applyLayout();
 
 })();
