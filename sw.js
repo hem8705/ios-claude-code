@@ -1,6 +1,6 @@
 'use strict';
 
-const CACHE_NAME = 'claude-dev-v1';
+const CACHE_NAME = 'claude-dev-v2';
 const SHELL_FILES = ['/', '/manifest.json', '/sw.js'];
 
 // On install: cache the app shell

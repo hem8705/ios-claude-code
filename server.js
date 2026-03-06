@@ -254,6 +254,29 @@ function router(req, res) {
     }
   }
 
+  if (pathname === '/api/send-command') {
+    if (req.method !== 'POST') {
+      return sendError(res, 405, 'POST required');
+    }
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', () => {
+      try {
+        const { command } = JSON.parse(body);
+        if (!command) return sendError(res, 400, 'command required');
+        const tmuxSession = process.env.TMUX_SESSION || 'claude';
+        execSync(`tmux send-keys -t "${tmuxSession}" "${command.replace(/"/g, '\\"')}" Enter`, {
+          timeout: 3000,
+          encoding: 'utf8',
+        });
+        return send(res, 200, { ok: true });
+      } catch (e) {
+        return sendError(res, 500, e.message || 'Failed to send command');
+      }
+    });
+    return;
+  }
+
   sendError(res, 404, 'Not found');
 }
 

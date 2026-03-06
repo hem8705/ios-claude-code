@@ -503,9 +503,98 @@ html, body {
   text-align: center;
   font-size: 12px;
 }
+
+/* Command menu */
+#cmd-menu-container {
+  position: relative;
+}
+#btn-cmd-menu {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  width: 28px;
+  background: var(--accent);
+  border: none;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: 6px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  font-family: var(--font);
+}
+#btn-cmd-menu:active {
+  background: #0a5cbf;
+}
+#cmd-dropdown {
+  display: none;
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  margin-bottom: 6px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  min-width: 180px;
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 200;
+  -webkit-overflow-scrolling: touch;
+}
+#cmd-dropdown.open {
+  display: block;
+}
+.cmd-section {
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+.cmd-section:last-child {
+  border-bottom: none;
+}
+.cmd-section-title {
+  padding: 4px 12px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+}
+.cmd-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  cursor: pointer;
+  gap: 10px;
+  -webkit-tap-highlight-color: transparent;
+}
+.cmd-item:active {
+  background: var(--bg3);
+}
+.cmd-key {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  min-width: 70px;
+}
+.cmd-desc {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+#cmd-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 199;
+}
+#cmd-overlay.visible {
+  display: block;
+}
 </style>
 </head>
 <body>
+<div id="cmd-overlay"></div>
 <div id="app">
   <div id="header">
     <button class="hbtn" id="btn-tree" title="Toggle file tree">&#9776;</button>
@@ -558,6 +647,77 @@ html, body {
 
       <div id="term-panel">
         <div id="term-toolbar">
+          <div id="cmd-menu-container">
+            <button id="btn-cmd-menu" title="Quick commands">/</button>
+            <div id="cmd-dropdown">
+              <div class="cmd-section">
+                <div class="cmd-section-title">Quick Actions</div>
+                <div class="cmd-item" data-cmd="y">
+                  <span class="cmd-key">y</span>
+                  <span class="cmd-desc">Yes / Accept</span>
+                </div>
+                <div class="cmd-item" data-cmd="n">
+                  <span class="cmd-key">n</span>
+                  <span class="cmd-desc">No / Reject</span>
+                </div>
+              </div>
+              <div class="cmd-section">
+                <div class="cmd-section-title">Slash Commands</div>
+                <div class="cmd-item" data-cmd="/help">
+                  <span class="cmd-key">/help</span>
+                  <span class="cmd-desc">Show help</span>
+                </div>
+                <div class="cmd-item" data-cmd="/status">
+                  <span class="cmd-key">/status</span>
+                  <span class="cmd-desc">Show git status</span>
+                </div>
+                <div class="cmd-item" data-cmd="/clear">
+                  <span class="cmd-key">/clear</span>
+                  <span class="cmd-desc">Clear conversation</span>
+                </div>
+                <div class="cmd-item" data-cmd="/compact">
+                  <span class="cmd-key">/compact</span>
+                  <span class="cmd-desc">Compact conversation</span>
+                </div>
+                <div class="cmd-item" data-cmd="/cost">
+                  <span class="cmd-key">/cost</span>
+                  <span class="cmd-desc">Show token cost</span>
+                </div>
+                <div class="cmd-item" data-cmd="/config">
+                  <span class="cmd-key">/config</span>
+                  <span class="cmd-desc">Show config</span>
+                </div>
+                <div class="cmd-item" data-cmd="/doctor">
+                  <span class="cmd-key">/doctor</span>
+                  <span class="cmd-desc">Run diagnostics</span>
+                </div>
+                <div class="cmd-item" data-cmd="/memory">
+                  <span class="cmd-key">/memory</span>
+                  <span class="cmd-desc">Manage memory</span>
+                </div>
+                <div class="cmd-item" data-cmd="/mcp">
+                  <span class="cmd-key">/mcp</span>
+                  <span class="cmd-desc">MCP servers info</span>
+                </div>
+                <div class="cmd-item" data-cmd="/permissions">
+                  <span class="cmd-key">/permissions</span>
+                  <span class="cmd-desc">Manage permissions</span>
+                </div>
+                <div class="cmd-item" data-cmd="/review">
+                  <span class="cmd-key">/review</span>
+                  <span class="cmd-desc">Review changes</span>
+                </div>
+                <div class="cmd-item" data-cmd="/vim">
+                  <span class="cmd-key">/vim</span>
+                  <span class="cmd-desc">Toggle vim mode</span>
+                </div>
+                <div class="cmd-item" data-cmd="/logout">
+                  <span class="cmd-key">/logout</span>
+                  <span class="cmd-desc">Log out</span>
+                </div>
+              </div>
+            </div>
+          </div>
           <span id="term-label">Terminal</span>
           <button class="tbtn" id="btn-term-reload" title="Reload terminal">&#8635;</button>
         </div>
@@ -678,6 +838,57 @@ btnTerm.classList.add('active');
 
 btnTermReload.addEventListener('click', () => {
   termFrame.src = termFrame.src;
+});
+
+// ===== COMMAND MENU =====
+
+const btnCmdMenu   = $('btn-cmd-menu');
+const cmdDropdown  = $('cmd-dropdown');
+const cmdOverlay   = $('cmd-overlay');
+
+function openCmdMenu() {
+  cmdDropdown.classList.add('open');
+  cmdOverlay.classList.add('visible');
+}
+
+function closeCmdMenu() {
+  cmdDropdown.classList.remove('open');
+  cmdOverlay.classList.remove('visible');
+}
+
+btnCmdMenu.addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (cmdDropdown.classList.contains('open')) {
+    closeCmdMenu();
+  } else {
+    openCmdMenu();
+  }
+});
+
+cmdOverlay.addEventListener('click', closeCmdMenu);
+
+cmdDropdown.addEventListener('click', async (e) => {
+  const item = e.target.closest('.cmd-item');
+  if (!item) return;
+  
+  const cmd = item.dataset.cmd;
+  if (!cmd) return;
+  
+  closeCmdMenu();
+  
+  try {
+    const res = await fetch('/api/send-command', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ command: cmd }),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      console.error('Failed to send command:', err.error || res.statusText);
+    }
+  } catch (e) {
+    console.error('Failed to send command:', e);
+  }
 });
 
 // ===== RESIZE HANDLE =====
