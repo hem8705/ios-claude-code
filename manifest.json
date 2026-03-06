@@ -5,16 +5,16 @@
   "start_url": "/",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#1e1e1e",
-  "theme_color": "#1e1e1e",
+  "background_color": "#f2f2f7",
+  "theme_color": "#f2f2f7",
   "icons": [
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='28' fill='%231e1e1e'/%3E%3Crect x='24' y='56' width='144' height='10' rx='5' fill='%230e7afe'/%3E%3Crect x='24' y='80' width='96' height='10' rx='5' fill='%23cccccc'/%3E%3Crect x='24' y='104' width='120' height='10' rx='5' fill='%23cccccc'/%3E%3Crect x='24' y='128' width='80' height='10' rx='5' fill='%233fb950'/%3E%3C/svg%3E",
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='42' fill='%23f2f2f7'/%3E%3Crect x='24' y='56' width='144' height='10' rx='5' fill='%23007aff'/%3E%3Crect x='24' y='80' width='96' height='10' rx='5' fill='%231c1c1e'/%3E%3Crect x='24' y='104' width='120' height='10' rx='5' fill='%231c1c1e'/%3E%3Crect x='24' y='128' width='80' height='10' rx='5' fill='%2334c759'/%3E%3C/svg%3E",
       "sizes": "192x192",
       "type": "image/svg+xml"
     },
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='80' fill='%231e1e1e'/%3E%3Crect x='64' y='148' width='384' height='28' rx='14' fill='%230e7afe'/%3E%3Crect x='64' y='212' width='256' height='28' rx='14' fill='%23cccccc'/%3E%3Crect x='64' y='276' width='320' height='28' rx='14' fill='%23cccccc'/%3E%3Crect x='64' y='340' width='212' height='28' rx='14' fill='%233fb950'/%3E%3C/svg%3E",
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%23f2f2f7'/%3E%3Crect x='64' y='148' width='384' height='28' rx='14' fill='%23007aff'/%3E%3Crect x='64' y='212' width='256' height='28' rx='14' fill='%231c1c1e'/%3E%3Crect x='64' y='276' width='320' height='28' rx='14' fill='%231c1c1e'/%3E%3Crect x='64' y='340' width='212' height='28' rx='14' fill='%2334c759'/%3E%3C/svg%3E",
       "sizes": "512x512",
       "type": "image/svg+xml"
     }
